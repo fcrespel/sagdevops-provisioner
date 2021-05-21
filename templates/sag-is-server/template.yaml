@@ -1,0 +1,156 @@
+alias: sag-is-server
+description: Integration Server
+
+environments:
+  default:
+    is.license.key:                   "*_PIE_10.*_*_*"
+    is.instance.name:                 default
+    is.primary.port:                  5555
+    is.admin.port:                    5554
+    is.ws.port:                       5556
+    is.diagnostic.port:               9999
+    is.jmx.port:                      8075
+    is.memory.init:                   1024
+    is.memory.max:                    1024
+    is.package.list:                  WmBrokerDeployer,WmDeployer,WmJDBCAdapter,WmNUMDeployer
+    is.fixes:                         ALL
+    is.logger.server.level:           Info
+    is.proxyuser.username:            proxyuser
+    is.proxyuser.password:            manage
+    is.admin.thread.min:              1
+    is.admin.thread.max:              30
+    is.admin.thread.backlog:          127
+    is.admin.thread.keepAliveTimeout: 20000
+    is.ws.thread.min:                 1
+    is.ws.thread.max:                 300
+    is.ws.thread.backlog:             65534
+    is.ws.thread.keepAliveTimeout:    20000
+
+layers:
+  runtime:
+    productRepo: ${repo.product}
+    fixRepo:     ${repo.fix}
+    templates:   is-server
+
+templates:
+  is-server:
+    licenses:
+      "IntegrationServer/config/licenseKey.xml": "${is.license.key}"
+    fixes: ${is.fixes}
+    products:
+      integrationServer:
+        ${is.instance.name}:
+          primary.port:    ${is.primary.port}
+          diagnostic.port: ${is.diagnostic.port}
+          jmx.port:        ${is.jmx.port}
+          license.file:    IntegrationServer/config/licenseKey.xml
+          package.list:    ${is.package.list}
+          configuration:
+            OSGI-IS_${instance.name}:
+              COMMON-MEMORY:
+                COMMON-MEMORY:
+                  InitSize: ${is.memory.init}
+                  MaxSize:  ${is.memory.max}
+            integrationServer-${instance.name}:
+              COMMON-LOCAL-USERS:
+                COMMON-LOCAL-USERS-${is.proxyuser.username}:
+                  '@id': "${is.proxyuser.username}"
+                  Password: "${is.proxyuser.password}"
+                  Enabled: 'true'
+                  ExtendedProperties:
+                    Property:
+                    - '@name': AllowDigestAuthentication
+                      $: 'false'
+                    - '@name': Groups
+                      $: Developers,Everybody
+              COMMON-PORTS:
+                COMMON-PORTS-HTTPListener_${is.admin.port}:
+                  Port:
+                    '@primary': 'false'
+                    '@alias': HTTPListener_${is.admin.port}
+                    Enabled: 'true'
+                    Type: STANDARD
+                    Number: ${is.admin.port}
+                    Protocol: HTTP
+                    Backlog: ${is.admin.thread.backlog}
+                    KeepAliveTimeout: ${is.admin.thread.keepAliveTimeout}
+                    ThreadPool:
+                      '@enabled': 'true'
+                      Min: ${is.admin.thread.min}
+                      Max: ${is.admin.thread.max}
+                      ThreadPriority: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': package
+                        $: WmRoot
+                      - '@name': suspended
+                        $: 'false'
+                      - '@name': delay
+                        $: '0'
+                    IPAccess:
+                      '@accessType': USE_GLOBAL_DEFAULT
+                    URLAccess:
+                      '@accessType': ALLOW_BY_DEFAULT
+                COMMON-PORTS-HTTPListener_${is.ws.port}:
+                  Port:
+                    '@primary': 'false'
+                    '@alias': HTTPListener_${is.ws.port}
+                    Enabled: 'true'
+                    Type: STANDARD
+                    Number: ${is.ws.port}
+                    Protocol: HTTP
+                    Backlog: ${is.ws.thread.backlog}
+                    KeepAliveTimeout: ${is.ws.thread.keepAliveTimeout}
+                    ThreadPool:
+                      '@enabled': 'true'
+                      Min: ${is.ws.thread.min}
+                      Max: ${is.ws.thread.max}
+                      ThreadPriority: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': package
+                        $: WmRoot
+                      - '@name': suspended
+                        $: 'false'
+                      - '@name': delay
+                        $: '0'
+                    IPAccess:
+                      '@accessType': USE_GLOBAL_DEFAULT
+                    URLAccess:
+                      '@accessType': ALLOW_BY_DEFAULT
+              IS-GROUPS:
+                IS-GROUPS-local_Developers:
+                  '@name': local_Developers
+                  Members:
+                    User:
+                    - Developer
+                    - proxyuser
+              IS-SYSPROPS:
+                IS-SYSPROPS:
+                  Settings: |
+                    watt.core.validation.skipAbsentStarBody=true
+                    watt.debug.level=${is.logger.server.level}
+                    watt.net.maxClientKeepaliveConns=40
+                    watt.net.proxySkipList=localhost,127.0.0.1,10.*,192.168.*
+                    watt.net.timeout=60
+                    watt.server.audit.logFilesToKeep=7
+                    watt.server.checkWhitelist=false
+                    watt.server.clientTimeout=5
+                    watt.server.http.preserveUriReservedChars=false
+                    watt.server.http.returnException=webMethods
+                    watt.server.jms.trigger.stopRequestTimeout=70
+                    watt.server.jms.trigger.threadPoolThrottle=70
+                    watt.server.log.alertMaxEntries=5000
+                    watt.server.log.maxEntries=500
+                    watt.server.math.floatOperation.mode=dynamic
+                    watt.server.ns.hideWmRoot=false
+                    watt.server.portStateless=5554,5556
+                    watt.server.serverlogFilesToKeep=7
+                    watt.server.stats.logFilesToKeep=7
+                    watt.server.threadPool=500
+      Deployer:     # WmDeployer
+      jdbcAdapter:  # WmJDBCAdapter
+
+provision:
+  default:
+    runtime: ${nodes}

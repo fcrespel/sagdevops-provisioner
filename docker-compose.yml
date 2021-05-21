@@ -1,0 +1,90 @@
+version: "3.2"
+
+services:
+  # Installer mirror
+  # Usage: docker-compose run --rm mirror-installer
+  mirror-installer:
+    image: curlimages/curl:latest
+    entrypoint: /opt/sagtools/scripts/mirror-installer.sh
+    working_dir: /opt/sagtools/installer
+    env_file:
+      - ./mirror.env
+    volumes:
+      - './mirror/installer:/opt/sagtools/installer'
+      - './scripts:/opt/sagtools/scripts'
+
+  # Repositories mirror
+  # Usage: docker-compose run --rm mirror-repos
+  mirror-repos:
+    image: ${REG}/commandcentral-server:${TAG}
+    entrypoint: /opt/sagtools/scripts/mirror-repos.sh
+    working_dir: /opt/sagtools
+    hostname: $HOSTNAME
+    env_file:
+      - ./mirror.env
+    volumes:
+      - './licenses:/opt/sagtools/licenses'
+      - './mirror/provisioning:/opt/sagtools/profiles/SPM/configuration/provisioning'
+      - './scripts:/opt/sagtools/scripts'
+
+  # Template provisioning
+  # Usage: docker-compose run --rm provision [template-name]
+  provision:
+    image: ${REG}/commandcentral-server:${TAG}
+    entrypoint: /opt/sagtools/scripts/provision.sh
+    working_dir: /opt/sagtools
+    hostname: $HOSTNAME
+    env_file:
+      - ./provision.env
+      - ${CUSTOM_ENV}
+    volumes:
+      - './licenses:/opt/sagtools/licenses'
+      - './mirror/provisioning:/opt/sagtools/profiles/SPM/configuration/provisioning'
+      - './scripts:/opt/sagtools/scripts'
+      - './templates:/opt/sagtools/profiles/CCE/data/templates/composite'
+      - '/opt/softwareag:/opt/softwareag'
+    depends_on:
+      - cc-installer
+
+  # Command Central Server
+  # Usage: docker-compose up -d cc
+  cc:
+    image: ${REG}/commandcentral-server:${TAG}
+    working_dir: /opt/sagtools
+    hostname: cc
+    ports:
+      - "8091:8091"
+    env_file:
+      - ./cc.env
+    volumes:
+      - 'cce-conf:/opt/sagtools/profiles/CCE/configuration'
+      - 'cce-data:/opt/sagtools/profiles/CCE/data'
+      - './licenses:/opt/sagtools/licenses'
+      - './mirror/provisioning:/opt/sagtools/profiles/SPM/configuration/provisioning'
+      - './templates:/opt/sagtools/profiles/CCE/data/templates/composite'
+    extra_hosts:
+      - 'node:host-gateway'
+
+  # Command Central Installer
+  # Usage: docker-compose up -d cc-installer
+  cc-installer:
+    image: nginx:latest
+    working_dir: /usr/share/nginx/html
+    hostname: cc-installer
+    env_file:
+      - ./mirror.env
+    volumes:
+      - './mirror/installer:/usr/share/nginx/html'
+
+  # Command Central Client
+  # Usage: docker-compose run --rm sagcc [args ...]
+  sagcc:
+    image: ${REG}/commandcentral-client:${TAG}
+    entrypoint: /opt/softwareag/CommandCentral/client/bin/sagcc
+    working_dir: /opt/softwareag
+    env_file:
+      - ./cc.env
+
+volumes:
+  cce-conf:
+  cce-data:  
