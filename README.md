@@ -20,6 +20,12 @@ On the host machine, create the `/opt/softwareag` installation directory and `sa
 useradd -u 1724 -U -d /opt/softwareag -m -s /bin/bash sagadmin
 ```
 
+Make sure the `mirror` and `templates` directories of this project are owned by this user:
+
+```
+chmod -R 1724 mirror templates
+```
+
 ## Usage
 
 ### Local mirror
