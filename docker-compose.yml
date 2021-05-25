@@ -7,6 +7,7 @@ services:
     image: curlimages/curl:latest
     entrypoint: /opt/sagtools/scripts/mirror-installer.sh
     working_dir: /opt/sagtools/installer
+    user: 1724:1724
     env_file:
       - ./mirror.env
     volumes:
