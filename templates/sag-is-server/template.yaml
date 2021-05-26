@@ -15,6 +15,9 @@ environments:
     is.package.list:                  WmBrokerDeployer,WmDeployer,WmJDBCAdapter,WmNUMDeployer
     is.fixes:                         ALL
     is.logger.server.level:           Info
+    is.administrator.password:        manage
+    is.developer.password:            manage
+    is.replicator.password:           manage
     is.proxyuser.username:            proxyuser
     is.proxyuser.password:            manage
     is.admin.thread.min:              1
@@ -53,6 +56,36 @@ templates:
                   MaxSize:  ${is.memory.max}
             integrationServer-${instance.name}:
               COMMON-LOCAL-USERS:
+                COMMON-LOCAL-USERS-Administrator:
+                  '@id': Administrator
+                  Password: "${is.administrator.password}"
+                  Enabled: 'true'
+                  ExtendedProperties:
+                    Property:
+                    - '@name': AllowDigestAuthentication
+                      $: 'false'
+                    - '@name': Groups
+                      $: Administrators,Everybody,Replicators
+                COMMON-LOCAL-USERS-Developer:
+                  '@id': "Developer"
+                  Password: "${is.developer.password}"
+                  Enabled: 'true'
+                  ExtendedProperties:
+                    Property:
+                    - '@name': AllowDigestAuthentication
+                      $: 'false'
+                    - '@name': Groups
+                      $: Developers,Everybody
+                COMMON-LOCAL-USERS-Replicator:
+                  '@id': "Replicator"
+                  Password: "${is.replicator.password}"
+                  Enabled: 'true'
+                  ExtendedProperties:
+                    Property:
+                    - '@name': AllowDigestAuthentication
+                      $: 'false'
+                    - '@name': Groups
+                      $: Replicators,Everybody
                 COMMON-LOCAL-USERS-${is.proxyuser.username}:
                   '@id': "${is.proxyuser.username}"
                   Password: "${is.proxyuser.password}"
