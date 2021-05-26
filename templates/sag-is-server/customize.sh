@@ -42,8 +42,9 @@ function downloadFromMavenCentral() {
 
 function invokeWmService() {
     local servicePath="$1"
+    local pwd=${__is_administrator_password:-manage}
     echo "- Calling $servicePath ..."
-    curl -sSLf -u Administrator:manage "http://localhost:5554/invoke/$servicePath" >/dev/null || return 1
+    curl -sSLf -u "Administrator:$pwd" "http://localhost:5554/invoke/$servicePath" >/dev/null || return 1
 }
 
 IS_HOME="$SAG_HOME/IntegrationServer"
