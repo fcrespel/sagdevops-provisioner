@@ -38,14 +38,19 @@ services:
     env_file:
       - ./provision.env
       - ${CUSTOM_ENV}
+    environment:
+      - SAG_HOME=${SAG_HOME}
+      - WM_HOME=${SAG_HOME}
     volumes:
       - './licenses:/opt/sagtools/licenses'
       - './mirror/provisioning:/opt/sagtools/profiles/SPM/configuration/provisioning'
       - './scripts:/opt/sagtools/scripts'
       - './templates:/opt/sagtools/profiles/CCE/data/templates/composite'
-      - '/opt/softwareag:/opt/softwareag'
+      - '${SAG_HOME}:${SAG_HOME}'
     depends_on:
       - cc-installer
+    extra_hosts:
+      - 'node:host-gateway'
 
   # Command Central Server
   # Usage: docker-compose up -d cc
@@ -72,8 +77,6 @@ services:
     image: nginx:latest
     working_dir: /usr/share/nginx/html
     hostname: cc-installer
-    env_file:
-      - ./mirror.env
     volumes:
       - './mirror/installer:/usr/share/nginx/html'
 
@@ -88,4 +91,4 @@ services:
 
 volumes:
   cce-conf:
-  cce-data:  
+  cce-data:

@@ -8,23 +8,26 @@ These tools are provided as-is and without warranty or support. They do not cons
 
 ## Prerequisites
 
-To run container images, make sure to install [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/) and have sufficient RAM available.
+1. Install [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/) and make sure you have sufficient RAM available.
 
-On Docker Hub, you will need to subscribe to the official [Command Central image](https://hub.docker.com/_/softwareag-commandcentral) with your account.
+2. On Docker Hub, subscribe to the official [Command Central image](https://hub.docker.com/_/softwareag-commandcentral) with your account. Use `docker login` to connect the host machine to your account.
 
-You will also need Empower credentials with access to the products you want to build, as well as valid license files in XML format. Create a ZIP archive of your license files in `licenses/licenses.zip`.
+3. Make sure you have Empower credentials with access to the products you want to build, as well as valid license files in XML format. Create a ZIP archive of your license files in `licenses/licenses.zip`.
 
-On the host machine, create the `/opt/softwareag` installation directory and `sagadmin` user:
+4. Edit the `.env` file to choose the `SAG_HOME` installation directory. On the host machine, create this installation directory and `sagadmin` user. For example:
+   ```
+   useradd -u 1724 -U -d /opt/softwareag -m -s /bin/bash sagadmin
+   ```
 
-```
-useradd -u 1724 -U -d /opt/softwareag -m -s /bin/bash sagadmin
-```
+5. Make sure the `mirror` and `templates` directories of this project are owned by this user:
+   ```
+   chmod -R 1724 mirror templates
+   ```
 
-Make sure the `mirror` and `templates` directories of this project are owned by this user:
-
-```
-chmod -R 1724 mirror templates
-```
+6. If products needs to communicate with the host machine itself (e.g. to access a database), refer to it as `node` in the template and add the following line to the `/etc/hosts` file of the host:
+   ```
+   127.0.0.1 node
+   ```
 
 ## Usage
 
@@ -45,7 +48,7 @@ Downloaded data will be stored in the `mirror` directory. You may wish to share 
 
 First, create or add your existing Command Central templates in the `templates/<template-name>` directory.
 
-Each template directory must contain a `template.yaml` file, and may contain `customize.sh` and `test.sh` scripts that will be executed in this order after installation. A `sag-is-server` sample is provided for Integration Server.
+Each template directory must contain a `template.yaml` file, and may contain `preinstall.sh`, `postinstall.sh` and `test.sh` scripts that will be executed in this order during installation. Some samples are provided in this repository.
 
 For more information about Command Central templates, please see the [official documentation](https://documentation.softwareag.com/webmethods/command_central/cce10-5/10-5_Command_Central_webhelp/index.html) and the [SoftwareAG/sagdevops-templates](https://github.com/SoftwareAG/sagdevops-templates) repository.
 
@@ -71,6 +74,8 @@ systemctl enable --now sag1spm105
 # Register/enable/start Integration Server
 /opt/softwareag/common/bin/daemon.sh -f /opt/softwareag/profiles/IS_default/bin/sagis105 -u sagadmin -n is105 -i 1
 systemctl enable --now sag1is105
+
+# Do the same for other products
 ```
 
 ### Troubleshooting
