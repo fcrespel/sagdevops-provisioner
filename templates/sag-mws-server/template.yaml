@@ -1,0 +1,90 @@
+alias: sag-mws-server
+description: My webMethods Server
+
+environments:
+  default:
+    mws.instance.name:          default
+    mws.http.port:              8585
+    mws.https.port:             8586
+    mws.jmx.port:               8587
+    mws.memory.init:            256
+    mws.memory.max:             512
+    mws.db.type:                ${}
+    mws.db.url:                 ${}
+    mws.db.username:            ${}
+    mws.db.password:            ${}
+    mws.lb.protocol:            http
+    mws.lb.host:                localhost
+    mws.lb.http.port:           ${mws.http.port}
+    mws.lb.https.port:          ${mws.https.port}
+    mws.administrator.password: manage
+    mws.designer.password:      manage
+    mws.sysadmin.password:      manage
+    mws.fixes:                  ALL
+
+layers:
+  runtime:
+    productRepo: ${repo.product}
+    fixRepo:     ${repo.fix}
+    templates:   mws-server
+
+templates:
+  mws-server:
+    fixes: ${mws.fixes}
+    products:
+      monitorUI:
+      MwsProgramFiles:
+        ${mws.instance.name}:
+          node.name: ${node.alias}
+          http.port: ${mws.http.port}
+          https.port: ${mws.https.port}
+          jmx.port: ${mws.jmx.port}
+          db.type: ${mws.db.type}
+          db.url: "${mws.db.url}"
+          db.username: "${mws.db.username}"
+          db.password: "${mws.db.password}"
+          configuration:
+            OSGI-MWS_${instance.name}:
+              COMMON-MEMORY:
+                COMMON-MEMORY:
+                  InitSize: ${mws.memory.init}
+                  MaxSize: ${mws.memory.max}
+            MwsProgramFiles-${instance.name}:
+              COMMON-CLUSTER:
+                COMMON-CLUSTER:
+                  ExtendedProperties:
+                    Property:
+                    - '@name': LoadBalancerHost
+                      $: ${mws.lb.host}
+                    - '@name': LoadBalancerHttpPort
+                      $: ${mws.lb.http.port}
+                    - '@name': LoadBalancerHttpsPort
+                      $: ${mws.lb.https.port}
+                    - '@name': jndiEnabled
+                      $: false
+              COMMON-LOCAL-USERS:
+                COMMON-LOCAL-USERS-Administrator:
+                  '@id': Administrator
+                  Password: '${mws.administrator.password}'
+                  Enabled: 'true'
+                  FirstName: My webMethods Administrator
+                  LastName: ''
+                  Email: ''
+                COMMON-LOCAL-USERS-Designer:
+                  '@id': Designer
+                  Password: '${mws.designer.password}'
+                  Enabled: 'true'
+                  FirstName: Designer
+                  LastName: ''
+                  Email: ''
+                COMMON-LOCAL-USERS-SysAdmin:
+                  '@id': SysAdmin
+                  Password: '${mws.sysadmin.password}'
+                  Enabled: 'true'
+                  FirstName: Sys Admin
+                  LastName: ''
+                  Email: ''
+
+provision:
+  default:
+    runtime: ${nodes}

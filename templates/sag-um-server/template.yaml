@@ -1,0 +1,52 @@
+alias: sag-um-server
+description: Universal Messaging Realm server
+
+environments:
+  default:
+    um.license.key:      "*_NUMWF_10.*_*_*"
+    um.instance.name:    default
+    um.realm:            default
+    um.instance.port:    9000
+    um.jmx.port:         9988
+    um.memory.init:      512
+    um.memory.max:       512
+    um.memory.direct:    512M
+    um.fixes:            ALL
+
+layers:
+  runtime:
+    productRepo: ${repo.product}
+    fixRepo:     ${repo.fix}
+    templates:   um-server
+
+templates:
+  um-server:
+    licenses:
+      "UniversalMessaging/server/templates/licence.xml": "${um.license.key}"
+    fixes: ${um.fixes}
+    products:
+      NUMRealmServer:
+        ${um.instance.name}:
+          instance.port: ${um.instance.port}
+          runtimeComponentId: Universal-Messaging-${instance.name}
+          configuration:
+            Universal-Messaging-${instance.name}:
+              COMMON-MEMORY:
+                COMMON-MEMORY:
+                  InitSize: ${um.memory.init}
+                  MaxSize:  ${um.memory.max}
+                  ExtendedProperties:
+                    Property:
+                      -
+                       "@name": "-XX:MaxDirectMemorySize"
+                       $: ${um.memory.direct}
+              COMMON-JAVASYSPROPS:
+                COMMON-JAVASYSPROPS:
+                   REALM: ${um.realm}
+                   com.sun.management.jmxremote.port: ${um.jmx.port}
+                   com.sun.management.jmxremote.authenticate: false
+                   com.sun.management.jmxremote.ssl: false
+
+provision:
+  default:
+    runtime: ${nodes}

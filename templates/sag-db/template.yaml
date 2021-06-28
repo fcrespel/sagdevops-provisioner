@@ -1,0 +1,36 @@
+alias: sag-db
+description: Database initialization
+
+environments:
+  default:
+    db.type:          ${}
+    db.url:           ${}
+    db.username:      ${}
+    db.password:      ${}
+    db.name:          ${}
+    db.products:      [DatabaseComponentConfigurator,MWScdc,PIEcdc,WMNcdc,WPEcdc]
+    db.components:    [Archive,ISCoreAudit,ISInternal,DocumentHistory,CrossReference,DistributedLocking,MywebMethodsServer]
+
+layers:
+  db:
+    productRepo:      ${repo.product}
+    fixRepo:          ${repo.fix}
+    templates:        db
+    databases:
+      schemas:
+        components:   ${db.components}
+        version:      latest
+        db.type:      ${db.type}
+        db.url:       ${db.url}
+        db.username:  ${db.username}
+        db.password:  ${db.password}
+        db.name:      ${db.name}
+
+templates:
+  db:
+    products: ${db.products}
+    fixes: ALL
+
+provision:
+  default:
+    db: ${nodes}

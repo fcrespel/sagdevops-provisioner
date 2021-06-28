@@ -12,7 +12,7 @@ environments:
     is.jmx.port:                      8075
     is.memory.init:                   1024
     is.memory.max:                    1024
-    is.package.list:                  WmBrokerDeployer,WmDeployer,WmJDBCAdapter,WmNUMDeployer
+    is.package.list:                  WmBrokerDeployer,WmDeployer,WmJDBCAdapter,WmMonitor,WmNUMDeployer
     is.fixes:                         ALL
     is.logger.server.level:           Info
     is.administrator.password:        manage
@@ -28,6 +28,10 @@ environments:
     is.ws.thread.max:                 300
     is.ws.thread.backlog:             65534
     is.ws.thread.keepAliveTimeout:    20000
+    is.db.type:                       ${}
+    is.db.url:                        ${}
+    is.db.username:                   ${}
+    is.db.password:                   ${}
 
 layers:
   runtime:
@@ -55,6 +59,230 @@ templates:
                   InitSize: ${is.memory.init}
                   MaxSize:  ${is.memory.max}
             integrationServer-${instance.name}:
+              COMMON-DBFUNCTION:
+                COMMON-DBFUNCTION-CentralUsers:
+                  Function:
+                    '@alias': CentralUsers
+                    Description: Central User Management Configuration
+                    PoolAlias: sag
+                    FailFastMode: 'false'
+                    CurrentlyInFailFast: 'No'
+                COMMON-DBFUNCTION-DocumentHistory:
+                  Function:
+                    '@alias': DocumentHistory
+                    Description: Document History for Exactly Once Processing
+                    PoolAlias: sag
+                    FailFastMode: 'false'
+                    CurrentlyInFailFast: 'No'
+                COMMON-DBFUNCTION-ISCoreAudit:
+                  Function:
+                    '@alias': ISCoreAudit
+                    Description: IS Core Audit Log Manager Function
+                    PoolAlias: sag
+                    FailFastMode: 'false'
+                    CurrentlyInFailFast: 'No'
+                COMMON-DBFUNCTION-ISInternal:
+                  Function:
+                    '@alias': ISInternal
+                    Description: For internal use by IS facilities
+                    PoolAlias: sag
+                    FailFastMode: 'false'
+                    CurrentlyInFailFast: 'No'
+                COMMON-DBFUNCTION-Xref:
+                  Function:
+                    '@alias': Xref
+                    Description: Key Cross Referencing and Echo Suppression
+                    PoolAlias: sag
+                    FailFastMode: 'false'
+                    CurrentlyInFailFast: 'No'
+              COMMON-LOGGERS:
+                COMMON-LOGGERS-Error:
+                  Logger:
+                    '@alias': Error
+                    Name: Error Logger
+                    Enabled: 'true'
+                    Mode: ASYNCHRONOUS
+                    Guaranteed: 'true'
+                    MaxQueueSize: '100000'
+                    Destination: DATABASE
+                    MaxRetryAttempts: '3'
+                    RetryInterval: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': QueueType
+                        $: lwq
+                      - '@name': ConnectionAlias
+                      - '@name': NumberOfReaders
+                        $: '1'
+                COMMON-LOGGERS-Guaranteed_Delivery_Inbound:
+                  Logger:
+                    '@alias': Guaranteed_Delivery_Inbound
+                    Name: Guaranteed Delivery Inbound Logger
+                    Enabled: 'false'
+                    Mode: SYNCHRONOUS
+                    Guaranteed: 'false'
+                    MaxQueueSize: '100000'
+                    Destination: FILE
+                    MaxRetryAttempts: '3'
+                    RetryInterval: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': QueueType
+                        $: lwq
+                      - '@name': ConnectionAlias
+                      - '@name': NumberOfReaders
+                        $: '1'
+                COMMON-LOGGERS-Guaranteed_Delivery_Outbound:
+                  Logger:
+                    '@alias': Guaranteed_Delivery_Outbound
+                    Name: Guaranteed Delivery Outbound Logger
+                    Enabled: 'false'
+                    Mode: SYNCHRONOUS
+                    Guaranteed: 'false'
+                    MaxQueueSize: '100000'
+                    Destination: FILE
+                    MaxRetryAttempts: '3'
+                    RetryInterval: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': QueueType
+                        $: lwq
+                      - '@name': ConnectionAlias
+                      - '@name': NumberOfReaders
+                        $: '1'
+                COMMON-LOGGERS-Messaging:
+                  Logger:
+                    '@alias': Messaging
+                    Name: Messaging Logger
+                    Enabled: 'false'
+                    Mode: SYNCHRONOUS
+                    Guaranteed: 'false'
+                    MaxQueueSize: '100000'
+                    Destination: FILE
+                    MaxRetryAttempts: '3'
+                    RetryInterval: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': QueueType
+                        $: lwq
+                      - '@name': ConnectionAlias
+                      - '@name': NumberOfReaders
+                        $: '1'
+                COMMON-LOGGERS-Security:
+                  Logger:
+                    '@alias': Security
+                    Name: Security Logger
+                    Enabled: 'true'
+                    Mode: SYNCHRONOUS
+                    Guaranteed: 'false'
+                    MaxQueueSize: '100000'
+                    Destination: FILE
+                    MaxRetryAttempts: '3'
+                    RetryInterval: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': GenerateAuditingDataOnStartup
+                        $: 'true'
+                      - '@name': GenerateAuditingDataOnEvent
+                        $: Success or Failure
+                      - '@name': SecurityAreasToAudit
+                        $: Authentication,Authorization,CSRFGuard,Certificates,Configuration,Custom,Enterprise Gateway,JDBC Pools,Keystore,Packages,Passwords,Ports,Proxy Servers,Remote Servers,SSL,Services,Web Services
+                      - '@name': QueueType
+                        $: lwq
+                      - '@name': ConnectionAlias
+                      - '@name': NumberOfReaders
+                        $: '1'
+                COMMON-LOGGERS-Server:
+                  Logger:
+                    '@alias': Server
+                    Name: Server Logger
+                    Enabled: 'true'
+                    Mode: SYNCHRONOUS
+                    Guaranteed: 'true'
+                    MaxQueueSize: '8192'
+                    Destination: FILE
+                COMMON-LOGGERS-Service:
+                  Logger:
+                    '@alias': Service
+                    Name: Service Logger
+                    Enabled: 'Yes'
+                    Mode: ASYNCHRONOUS
+                    Guaranteed: 'true'
+                    MaxQueueSize: '100000'
+                    Destination: DATABASE
+                    MaxRetryAttempts: '3'
+                    RetryInterval: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': ServiceLogLevel
+                        $: perSvc
+                      - '@name': QueueType
+                        $: lwq
+                      - '@name': ConnectionAlias
+                      - '@name': NumberOfReaders
+                        $: '1'
+                COMMON-LOGGERS-Session:
+                  Logger:
+                    '@alias': Session
+                    Name: Session Logger
+                    Enabled: 'false'
+                    Mode: SYNCHRONOUS
+                    Guaranteed: 'false'
+                    MaxQueueSize: '100000'
+                    Destination: FILE
+                    MaxRetryAttempts: '3'
+                    RetryInterval: '5'
+                    ExtendedProperties:
+                      Property:
+                      - '@name': QueueType
+                        $: lwq
+                      - '@name': ConnectionAlias
+                      - '@name': NumberOfReaders
+                        $: '1'
+                COMMON-LOGGERS-UM_Client:
+                  Logger:
+                    '@alias': UM_Client
+                    Name: UM Client Logger
+                    Enabled: 'true'
+                    Mode: SYNCHRONOUS
+                    Guaranteed: 'false'
+                    Destination: FILE
+                    ExtendedProperties:
+                      Property:
+                      - '@name': LogLevel
+                        $: Error
+                      - '@name': LogDepth
+                        $: '2'
+                      - '@name': LogSize
+                        $: '10'
+              COMMON-JDBC:
+                COMMON-JDBC-sag:
+                  Pool:
+                    '@alias': sag
+                    Name: sag
+                    Description: ''
+                    MinSize: '0'
+                    MaxSize: '10'
+                    MaxIdleTime: '60000'
+                    DatabaseServer:
+                      '@type': ${is.db.type}
+                      URL: ${is.db.url}
+                      User: ${is.db.username}
+                      Password: ${is.db.password}
+                    ExtendedProperties:
+                      Property:
+                      - '@name': AvailConnWarningThreshold
+                        $: '0'
+                      - '@name': WaitingThreadThresholdCount
+                        $: '0'
+                      - '@name': SpyEnabled
+                        $: 'false'
+                      - '@name': SnoopEnabled
+                        $: 'false'
+                      - '@name': SpyParams
+                        $: SpyAttributes=(log=(file)logs/spy/sag.log;logTName=yes;timestamp=yes)
+                      - '@name': SnoopParams
+                        $: ddtdbg.ProtocolTraceEnable=true;ddtdbg.ProtocolTraceMaxline=16;ddtdbg.ProtocolTraceLocation=logs/snoop/sag.log;ddtdbg.ProtocolTraceShowTime=true
               COMMON-LOCAL-USERS:
                 COMMON-LOCAL-USERS-Administrator:
                   '@id': Administrator
@@ -157,7 +385,56 @@ templates:
                   Members:
                     User:
                     - Developer
-                    - proxyuser
+                    - ${is.proxyuser.username}
+              IS-SCHEDULED-TASKS:
+                IS-SCHEDULED-TASKS-5f0e06f0-be09-11eb-8b3f-000000000000:
+                  ServiceInfo:
+                    Description: Delete Server Logs (30 days)
+                    Service: pub.monitor.archive:serverArchive
+                    Input:
+                      keys: scheduler_mode service days archiveAction
+                      values: save pub.monitor.archive:serverArchive 30 DELETE
+                    User: Administrator
+                    TargetNode: Any Server
+                  OverdueTask:
+                    OverdueOptions: '0'
+                    delay: '0'
+                  ScheduleType:
+                    ScheduleTypeOptions: complex
+                    ComplexRepeating:
+                      StartDate: ''
+                      StartTime: ''
+                      DonotOverlap: 'true'
+                      RunMask:
+                        Hours: '2'
+                        Minutes: '0'
+                  ID: 5f0e06f0-be09-11eb-8b3f-000000000000
+                  StatusOptionType: active
+                  Status: Active
+                IS-SCHEDULED-TASKS-5f0e06f0-be09-11eb-8b3g-000000000000:
+                  ServiceInfo:
+                    Description: Delete Service Logs (30 days)
+                    Service: pub.monitor.archive:serviceArchive
+                    Input:
+                      keys: scheduler_mode service days archiveAction statuts
+                      values: save pub.monitor.archive:serverArchive 30 DELETE ALL
+                    User: Administrator
+                    TargetNode: Any Server
+                  OverdueTask:
+                    OverdueOptions: '0'
+                    delay: '0'
+                  ScheduleType:
+                    ScheduleTypeOptions: complex
+                    ComplexRepeating:
+                      StartDate: ''
+                      StartTime: ''
+                      DonotOverlap: 'true'
+                      RunMask:
+                        Hours: '3'
+                        Minutes: '0'
+                  ID: 5f0e06f0-be09-11eb-8b3g-000000000000
+                  StatusOptionType: active
+                  Status: Active
               IS-SYSPROPS:
                 IS-SYSPROPS:
                   Settings: |
@@ -169,6 +446,7 @@ templates:
                     watt.server.audit.logFilesToKeep=7
                     watt.server.checkWhitelist=false
                     watt.server.clientTimeout=5
+                    watt.server.db.share.ISInternal=true
                     watt.server.http.preserveUriReservedChars=false
                     watt.server.http.returnException=webMethods
                     watt.server.jms.trigger.stopRequestTimeout=70
@@ -183,6 +461,7 @@ templates:
                     watt.server.threadPool=500
       Deployer:     # WmDeployer
       jdbcAdapter:  # WmJDBCAdapter
+      Monitor:      # WmMonitor
 
 provision:
   default:
